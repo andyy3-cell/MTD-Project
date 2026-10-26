@@ -1,0 +1,24 @@
+{
+  "name": "mtd-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andyy3-cell/MTD-Project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andyy3-cell/MTD-Project/issues"
+  },
+  "homepage": "https://github.com/andyy3-cell/MTD-Project#readme",
+  "dependencies": {
+    "dotenv": "^18.0.9"
+  },
+  "type": "module"
+}
