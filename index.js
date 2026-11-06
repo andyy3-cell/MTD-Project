@@ -230,12 +230,16 @@ function arrivalTime(departure) {
 export function formatDisplay(departures, now = new Date()) {
   const width = 64;
   const border = `+${"-".repeat(width)}+`;
-  const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const time = now.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
   const fit = (value) => value.slice(0, width - 2).padEnd(width - 2);
   const lines = [
     border,
     `|${fit(` MTD  ${STOP_NAME.toUpperCase()}`)}|`,
-    `|${fit(` NEXT DEPARTURES                              ${time}`)}|`,
+    `|${fit(` NEXT DEPARTURES                         UPDATED ${time}`)}|`,
     border,
   ];
 
@@ -257,26 +261,26 @@ export function formatDisplay(departures, now = new Date()) {
 }
 
 async function displayOnce() {
-  process.stdout.write("\x1b[2J\x1b[H");
+  const render = (content) => {
+    process.stdout.write(`\x1b[?25l\x1b[H\x1b[2J${content}\x1b[?25h`);
+  };
+
   try {
     const departures = await getRealtimeDepartures();
-    console.log(formatDisplay(departures));
+    render(formatDisplay(departures));
     return true;
   } catch (error) {
-    console.error(`GTFS-RT data unavailable: ${error.message}`);
     try {
       const departures = await getDepartures();
-      console.log(formatDisplay(departures));
+      render(formatDisplay(departures));
       return true;
     } catch (apiError) {
-      console.error(`MTD API data unavailable: ${apiError.message}`);
       try {
         const scheduled = getScheduledDepartures(await getGtfsData());
-        console.log(formatDisplay(scheduled));
+        render(formatDisplay(scheduled));
         return true;
       } catch (fallbackError) {
-        console.error(`GTFS fallback unavailable: ${fallbackError.message}`);
-        console.log(`${STOP_NAME}\nService data temporarily unavailable.`);
+        render(`${STOP_NAME}\nService data temporarily unavailable.\n\n${fallbackError.message}`);
         return false;
       }
     }
@@ -284,8 +288,27 @@ async function displayOnce() {
 }
 
 const once = process.argv.includes("--once");
+const alternateScreen = !once && process.stdout.isTTY;
+
+function restoreTerminal() {
+  if (alternateScreen) {
+    process.stdout.write("\x1b[?25h\x1b[?1049l");
+  }
+}
 
 try {
+  if (alternateScreen) {
+    process.stdout.write("\x1b[?1049h\x1b[?25l\x1b[2J\x1b[H");
+    process.once("SIGINT", () => {
+      restoreTerminal();
+      process.exit(130);
+    });
+    process.once("SIGTERM", () => {
+      restoreTerminal();
+      process.exit(143);
+    });
+  }
+
   if (once) {
     if (!(await displayOnce())) {
       process.exitCode = 1;
