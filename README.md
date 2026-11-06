@@ -18,8 +18,11 @@ then refreshes them every minute. The v3 stop ID is `5THARY:3`.
    npm start
    ```
 
-The app uses MTD API v3 and sends the key in the `X-ApiKey` header. It is
-intentionally polled no more than once per minute. For a single request while testing:
+The app uses the official MTD GTFS-RT trip updates feed for live departures and
+is intentionally polled no more than once per minute. If GTFS-RT is unavailable,
+it tries MTD API v3, then the official GTFS schedule feed. Temporary server
+errors from the API are retried up to two times. For a single request while
+testing:
 
 ```sh
 npm run once
